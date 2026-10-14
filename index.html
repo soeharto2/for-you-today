@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <title>Happy Birthday</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        min-height: 100vh;
+        min-height: 100dvh;
+        background: #1c1a14;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Lora", Georgia, serif;
+        overflow: hidden;
+        position: relative;
+        -webkit-tap-highlight-color: transparent;
+      }
+      #bgCanvas {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 0;
+        pointer-events: none;
+      }
+      .scene {
+        position: relative;
+        z-index: 10;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 22px;
+      }
+      .envelope-wrap {
+        position: relative;
+        width: min(320px, 82vw);
+        height: min(224px, 57.4vw);
+        cursor: pointer;
+        transition: transform 0.3s ease;
+        filter: drop-shadow(0 12px 40px rgba(218, 160, 30, 0.2));
+        touch-action: manipulation;
+      }
+      .envelope-wrap:hover {
+        transform: translateY(-5px);
+      }
+      .envelope-wrap.opening {
+        pointer-events: none;
+      }
+      .env-body {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 83.9%;
+        background: #2e2718;
+        border-radius: 3px 3px 10px 10px;
+        z-index: 2;
+        border: 1px solid #4a3c20;
+      }
+      .env-left {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        z-index: 3;
+        border-bottom: min(188px, 48.1vw) solid #252010;
+        border-right: min(160px, 41vw) solid transparent;
+      }
+      .env-right {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        width: 0;
+        height: 0;
+        z-index: 3;
+        border-bottom: min(188px, 48.1vw) solid #201c0c;
+        border-left: min(160px, 41vw) solid transparent;
+      }
+      .env-bottom {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        z-index: 4;
+        border-left: min(160px, 41vw) solid transparent;
+        border-right: min(160px, 41vw) solid transparent;
+        border-bottom: min(100px, 25.6vw) solid #1a160a;
+      }
+      .env-flap {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 0;
+        height: 0;
+        z-index: 6;
+        border-left: min(160px, 41vw) solid transparent;
+        border-right: min(160px, 41vw) solid transparent;
+        border-top: min(120px, 30.7vw) solid #2a2214;
+        transform-origin: top center;
+        transition: transform 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+        filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+      }
+      .envelope-wrap.opening .env-flap {
+        transform: rotateX(180deg);
+      }
+      .stamp {
+        position: absolute;
+        top: 28px;
+        right: 28px;
+        width: 36px;
+        height: 36px;
+        z-index: 5;
+        opacity: 0.9;
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
+      }
+      .envelope-wrap.opening .stamp {
+        opacity: 0;
+        transform: scale(0.5);
+      }
+      .seal {
+        position: absolute;
+        top: 39%;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 28px;
+        height: 28px;
+        background: #c8920a;
+        border-radius: 50%;
+        z-index: 7;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+        transition:
+          opacity 0.3s,
+          transform 0.3s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .seal::after {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #a07008;
+        box-shadow: 0 0 0 2px #c8920a;
+      }
+      .envelope-wrap.opening .seal {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.3);
+      }
+      .hint {
+        font-family: "DM Sans", sans-serif;
+        font-weight: 300;
+        font-size: 11px;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: #7a6a40;
+        animation: blink 2.5s ease-in-out infinite;
+        padding: 12px 24px;
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+      @keyframes blink {
+        0%,
+        100% {
+          opacity: 0.3;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+      .hint.hidden {
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.3s;
+      }
+      .letter-wrap {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 100;
+        pointer-events: none;
+        opacity: 0;
+      }
+      .letter-wrap.visible {
+        pointer-events: all;
+        opacity: 1;
+      }
+      .letter-bg {
+        position: absolute;
+        inset: 0;
+        background: rgba(18, 15, 8, 0.88);
+        backdrop-filter: blur(10px);
+        opacity: 0;
+        transition: opacity 0.5s ease;
+      }
+      .letter-wrap.visible .letter-bg {
+        opacity: 1;
+      }
+      .letter {
+        position: relative;
+        background: #faf6ea;
+        width: min(560px, 94vw);
+        max-height: 88vh;
+        max-height: 88dvh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 2px;
+        padding: clamp(28px, 6vw, 52px) clamp(20px, 6vw, 50px)
+          clamp(28px, 6vw, 50px);
+        box-shadow:
+          0 0 0 1px rgba(180, 140, 40, 0.2),
+          0 24px 70px rgba(0, 0, 0, 0.6);
+        transform: translateY(50px) scale(0.94);
+        opacity: 0;
+        transition:
+          transform 0.75s cubic-bezier(0.16, 1, 0.3, 1),
+          opacity 0.75s ease;
+        scrollbar-width: thin;
+        scrollbar-color: #d4b84a transparent;
+      }
+      .letter-wrap.visible .letter {
+        transform: none;
+        opacity: 1;
+        transition-delay: 0.2s;
+      }
+      .letter::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background-image: repeating-linear-gradient(
+          transparent,
+          transparent 31px,
+          rgba(160, 120, 20, 0.08) 31px,
+          rgba(160, 120, 20, 0.08) 32px
+        );
+        background-position: 0 68px;
+        pointer-events: none;
+      }
+      .letter-top-rule {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 32px;
+        opacity: 0;
+        transition: opacity 0.5s ease 0.55s;
+      }
+      .letter-wrap.visible .letter-top-rule {
+        opacity: 1;
+      }
+      .letter-top-rule .line {
+        flex: 1;
+        height: 1px;
+        background: linear-gradient(
+          to right,
+          transparent,
+          #d4a830,
+          transparent
+        );
+      }
+      .letter-top-rule svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+      .letter-date {
+        font-family: "DM Sans", sans-serif;
+        font-weight: 300;
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        color: #9a7a30;
+        text-transform: uppercase;
+        margin-bottom: 24px;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: all 0.5s ease 0.65s;
+      }
+      .letter-wrap.visible .letter-date {
+        opacity: 1;
+        transform: none;
+      }
+      .letter h1 {
+        font-size: clamp(22px, 5.5vw, 28px);
+        font-weight: 400;
+        font-style: italic;
+        color: #1c1505;
+        line-height: 1.3;
+        margin-bottom: 28px;
+        opacity: 0;
+        transform: translateY(10px);
+        transition: all 0.5s ease 0.8s;
+      }
+      .letter-wrap.visible .letter h1 {
+        opacity: 1;
+        transform: none;
+      }
+      .letter p {
+        position: relative;
+        font-size: clamp(14px, 3.8vw, 16px);
+        line-height: 1.9;
+        color: #2e2510;
+        margin-bottom: 18px;
+        opacity: 0;
+        transform: translateY(8px);
+        transition:
+          opacity 0.5s ease,
+          transform 0.5s ease;
+      }
+      .letter p em {
+        font-style: italic;
+        color: #7a5a10;
+      }
+      .letter-sign {
+        position: relative;
+        margin-top: 28px;
+        opacity: 0;
+        transform: translateY(8px);
+        transition: all 0.5s ease 2.5s;
+        border-top: 1px solid rgba(180, 140, 40, 0.2);
+        padding-top: 22px;
+      }
+      .letter-sign .label {
+        font-family: "DM Sans", sans-serif;
+        font-weight: 300;
+        font-size: 12px;
+        letter-spacing: 0.1em;
+        color: #9a7a30;
+        margin-bottom: 8px;
+        display: block;
+      }
+      .letter-sign .sig {
+        font-size: 22px;
+        font-style: italic;
+        color: #1c1505;
+        display: block;
+      }
+      .close-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 2;
+        background: none;
+        border: 1px solid rgba(180, 140, 40, 0.25);
+        color: #9a7a30;
+        width: 38px;
+        height: 38px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        opacity: 0;
+        touch-action: manipulation;
+      }
+      .letter-wrap.visible .close-btn {
+        opacity: 1;
+        transition-delay: 2s;
+      }
+      .close-btn:hover,
+      .close-btn:active {
+        background: rgba(180, 140, 40, 0.1);
+        border-color: #c8920a;
+        color: #c8920a;
+      }
+      .letter::-webkit-scrollbar {
+        width: 3px;
+      }
+      .letter::-webkit-scrollbar-thumb {
+        background: #d4b84a;
+        border-radius: 2px;
+      }
+    </style>
+  </head>
+  <body>
+    <canvas id="bgCanvas"></canvas>
+
+    <div class="scene">
+      <div class="envelope-wrap" id="envelope" onclick="openEnvelope()">
+        <div class="env-flap"></div>
+        <div class="stamp"><svg viewBox="0 0 36 36" id="stampSvg"></svg></div>
+        <div class="seal"></div>
+        <div class="env-body"></div>
+        <div class="env-left"></div>
+        <div class="env-right"></div>
+        <div class="env-bottom"></div>
+      </div>
+      <p class="hint" id="hint" onclick="openEnvelope()">open</p>
+    </div>
+
+    <div class="letter-wrap" id="letterWrap">
+      <div class="letter-bg" onclick="closeLetter()"></div>
+      <div class="letter">
+        <button class="close-btn" onclick="closeLetter()" aria-label="Close">
+          ✕
+        </button>
+
+        <div class="letter-top-rule">
+          <div class="line"></div>
+          <svg viewBox="0 0 18 18" id="ruleSvg"></svg>
+          <div class="line"></div>
+        </div>
+
+        <div class="letter-date">March 11, 2026 &nbsp;·&nbsp; For You</div>
+        <h1>To My Friend, My Sunflower</h1>
+
+        <p>
+          I wanted to write you something real this year, not just a quick
+          message between everything else. You deserve more than that, and
+          honestly, I wanted to say a few things out loud.
+        </p>
+        <p>
+          Some people just make life better by being in it. You're one of them.
+          You show up, you listen, you laugh at the right moments, and somehow
+          you make hard days feel a little lighter.
+        </p>
+        <p>
+          What I love most is that you're completely <em>yourself</em>. No
+          performance, no apology. Being around that makes it easier for the
+          rest of us to be ourselves too.
+        </p>
+        <p>
+          I think about the little things: the inside jokes that make no sense
+          to anyone else, the random messages that arrive at exactly the right
+          time, the way you can turn an ordinary day into a good memory without
+          even trying.
+        </p>
+        <p>
+          Even when life gets busy, or the distance gets in the way, I never
+          doubt that you're in my corner. And I hope you never doubt that I'm in
+          yours.
+        </p>
+        <p>
+          Friends like you are rare. Thank you for the laughs, the honesty, the
+          support, and for being someone I can count on.
+        </p>
+        <p>So today, I just want you to know something simple.</p>
+        <p>Happy birthday.</p>
+        <p>I hope today feels warm.</p>
+        <p>I hope it feels kind.</p>
+        <p>
+          And I hope you feel how loved you are, today and every day. You're
+          never celebrating alone.
+        </p>
+
+        <div class="letter-sign">
+          <span class="label">With all my love and gratitude,</span>
+          <span class="sig">Your friend</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Sunflower SVG builder (stamp + letter divider)
+      function sunflower(svg, n, cy, rx, ry, core, inner) {
+        let h = "";
+        for (let i = 0; i < n; i++) {
+          h += `<ellipse cx="0" cy="${cy}" rx="${rx}" ry="${ry}" fill="${i % 2 ? "#c89020" : "#d4a830"}" transform="rotate(${(360 / n) * i})"/>`;
+        }
+        h += `<circle r="${core}" fill="#2a1400"/><circle r="${inner}" fill="#3d2000"/>`;
+        const c = svg.viewBox.baseVal.width / 2;
+        svg.innerHTML =
+          (c === 18
+            ? '<rect width="36" height="36" rx="3" fill="#2a2214" stroke="#4a3c20"/>'
+            : "") + `<g transform="translate(${c},${c})">${h}</g>`;
+      }
+      sunflower(document.getElementById("stampSvg"), 9, -9, 3, 6, 5.5, 3.5);
+      sunflower(document.getElementById("ruleSvg"), 8, -5.5, 2, 4, 3.5, 2);
+
+      // Background
+      const canvas = document.getElementById("bgCanvas");
+      const ctx = canvas.getContext("2d");
+      let W, H, cx, cy;
+      function resize() {
+        W = canvas.width = innerWidth;
+        H = canvas.height = innerHeight;
+        cx = W / 2;
+        cy = H / 2;
+      }
+      resize();
+      addEventListener("resize", resize);
+
+      const STARS = Array.from({ length: 220 }, () => ({
+        x: Math.random() * 2000 - 1000,
+        y: Math.random() * 2000 - 1000,
+        z: Math.random() * 1200 + 100,
+        size: Math.random() * 1.4 + 0.2,
+        brightness: Math.random() * 0.55 + 0.2,
+        ts: Math.random() * 0.015 + 0.005,
+        to: Math.random() * Math.PI * 2,
+      }));
+      const RAYS = Array.from({ length: 9 }, (_, i) => ({
+        angle: -0.55 + i * 0.14 + (Math.random() - 0.5) * 0.06,
+        width: 0.04 + Math.random() * 0.055,
+        opacity: 0.025 + Math.random() * 0.045,
+        speed: (Math.random() - 0.5) * 0.0003,
+      }));
+
+      class Ember {
+        constructor() {
+          this.reset(true);
+        }
+        reset(born) {
+          this.x = cx + (Math.random() - 0.5) * W * 0.7;
+          this.y = born ? Math.random() * H : H + 10;
+          this.vy = -(Math.random() * 0.45 + 0.1);
+          this.vx = (Math.random() - 0.5) * 0.18;
+          this.r = Math.random() * 1.8 + 0.4;
+          this.life = 0;
+          this.maxLife = 180 + Math.random() * 280;
+          this.hue = 38 + Math.random() * 18;
+          this.sat = 70 + Math.random() * 30;
+        }
+        update() {
+          this.x += this.vx + Math.sin(this.life * 0.04) * 0.12;
+          this.y += this.vy;
+          this.life++;
+          if (this.life > this.maxLife || this.y < -10) this.reset(false);
+        }
+        draw(t) {
+          const p = this.life / this.maxLife;
+          const fade = p < 0.12 ? p / 0.12 : p > 0.78 ? (1 - p) / 0.22 : 1;
+          const a =
+            fade * (0.75 + 0.25 * Math.sin(this.life * 0.22 + t)) * 0.72;
+          const g = ctx.createRadialGradient(
+            this.x,
+            this.y,
+            0,
+            this.x,
+            this.y,
+            this.r * 2.2,
+          );
+          g.addColorStop(0, `hsla(${this.hue},${this.sat}%,80%,${a})`);
+          g.addColorStop(0.5, `hsla(${this.hue},${this.sat}%,58%,${a * 0.5})`);
+          g.addColorStop(1, `hsla(${this.hue},${this.sat}%,40%,0)`);
+          ctx.beginPath();
+          ctx.fillStyle = g;
+          ctx.arc(this.x, this.y, this.r * 2.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      class Petal {
+        constructor() {
+          this.reset(true);
+        }
+        reset(born) {
+          this.x = Math.random() * W;
+          this.y = born ? Math.random() * H : -20;
+          this.vy = 0.18 + Math.random() * 0.28;
+          this.vx = (Math.random() - 0.5) * 0.2;
+          this.rot = Math.random() * Math.PI * 2;
+          this.rotV = (Math.random() - 0.5) * 0.012;
+          this.w = 5 + Math.random() * 9;
+          this.h = 9 + Math.random() * 14;
+          this.life = 0;
+          this.hue = 35 + Math.random() * 20;
+          this.alpha = 0.12 + Math.random() * 0.22;
+        }
+        update() {
+          this.x += this.vx + Math.sin(this.life * 0.018) * 0.25;
+          this.y += this.vy;
+          this.rot += this.rotV;
+          this.life++;
+          if (this.y > H + 30) this.reset(false);
+        }
+        draw() {
+          const fade =
+            this.life < 30
+              ? this.life / 30
+              : this.y > H - 60
+                ? (H - this.y) / 60
+                : 1;
+          ctx.save();
+          ctx.translate(this.x, this.y);
+          ctx.rotate(this.rot);
+          ctx.beginPath();
+          ctx.ellipse(0, 0, this.w / 2, this.h / 2, 0, 0, Math.PI * 2);
+          ctx.fillStyle = `hsla(${this.hue},65%,62%,${this.alpha * fade})`;
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+      class Bokeh {
+        constructor() {
+          this.reset(true);
+        }
+        reset(born) {
+          this.x = Math.random() * W;
+          this.y = born ? Math.random() * H : H + 80;
+          this.vy = -(0.06 + Math.random() * 0.12);
+          this.r = 20 + Math.random() * 55;
+          this.life = 0;
+          this.maxLife = 600 + Math.random() * 400;
+          this.alpha = 0.018 + Math.random() * 0.032;
+          this.hue = 40 + Math.random() * 15;
+        }
+        update() {
+          this.y += this.vy;
+          this.life++;
+          if (this.life > this.maxLife || this.y < -this.r) this.reset(false);
+        }
+        draw() {
+          const p = this.life / this.maxLife;
+          const f = p < 0.15 ? p / 0.15 : p > 0.8 ? (1 - p) / 0.2 : 1;
+          const g = ctx.createRadialGradient(
+            this.x,
+            this.y,
+            0,
+            this.x,
+            this.y,
+            this.r,
+          );
+          g.addColorStop(0, `hsla(${this.hue},70%,65%,${this.alpha * f})`);
+          g.addColorStop(
+            0.6,
+            `hsla(${this.hue},60%,50%,${this.alpha * f * 0.4})`,
+          );
+          g.addColorStop(1, `hsla(${this.hue},60%,40%,0)`);
+          ctx.beginPath();
+          ctx.fillStyle = g;
+          ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      const EMBERS = Array.from({ length: 80 }, () => new Ember());
+      const PETALS = Array.from({ length: 28 }, () => new Petal());
+      const BOKEH = Array.from({ length: 18 }, () => new Bokeh());
+
+      let t = 0;
+      function draw() {
+        t += 0.016;
+        const bg = ctx.createRadialGradient(
+          cx,
+          cy * 0.3,
+          0,
+          cx,
+          cy,
+          Math.max(W, H) * 0.85,
+        );
+        bg.addColorStop(0, "#2a2310");
+        bg.addColorStop(0.5, "#1a160a");
+        bg.addColorStop(1, "#0e0c06");
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        const len = Math.max(W, H) * 1.6;
+        for (const r of RAYS) {
+          r.angle += r.speed;
+          ctx.beginPath();
+          ctx.moveTo(cx, 0);
+          ctx.lineTo(
+            cx + Math.sin(r.angle - r.width) * len,
+            Math.cos(r.angle - r.width) * len,
+          );
+          ctx.lineTo(
+            cx + Math.sin(r.angle + r.width) * len,
+            Math.cos(r.angle + r.width) * len,
+          );
+          ctx.closePath();
+          const g = ctx.createRadialGradient(cx, 0, 0, cx, 0, len);
+          g.addColorStop(
+            0,
+            `rgba(220,165,40,${r.opacity * (0.8 + 0.2 * Math.sin(t * 0.4 + r.angle * 10))})`,
+          );
+          g.addColorStop(0.5, `rgba(200,140,20,${r.opacity * 0.3})`);
+          g.addColorStop(1, "rgba(200,140,20,0)");
+          ctx.fillStyle = g;
+          ctx.fill();
+        }
+
+        for (const s of STARS) {
+          s.z -= 0.08;
+          if (s.z <= 0) {
+            s.z = 1200;
+            s.x = Math.random() * 2000 - 1000;
+            s.y = Math.random() * 2000 - 1000;
+          }
+          const sx = cx + (s.x / s.z) * 400,
+            sy = cy + (s.y / s.z) * 400;
+          if (sx < 0 || sx > W || sy < 0 || sy > H) continue;
+          const tw =
+            s.brightness * (0.6 + 0.4 * Math.sin(t * s.ts * 60 + s.to));
+          ctx.beginPath();
+          ctx.arc(
+            sx,
+            sy,
+            Math.max(0.2, s.size * (1 - s.z / 1300)),
+            0,
+            Math.PI * 2,
+          );
+          ctx.fillStyle = `rgba(255,240,180,${tw})`;
+          ctx.fill();
+        }
+        for (const b of BOKEH) {
+          b.update();
+          b.draw();
+        }
+        for (const e of EMBERS) {
+          e.update();
+          e.draw(t);
+        }
+        for (const p of PETALS) {
+          p.update();
+          p.draw();
+        }
+        requestAnimationFrame(draw);
+      }
+      draw();
+
+      function openEnvelope() {
+        document.getElementById("envelope").classList.add("opening");
+        document.getElementById("hint").classList.add("hidden");
+        setTimeout(() => {
+          const wrap = document.getElementById("letterWrap");
+          wrap.classList.add("visible");
+          const paras = wrap.querySelectorAll(".letter p");
+          paras.forEach((p, i) => {
+            p.style.transitionDelay = 0.85 + i * 0.1 + "s";
+            p.style.opacity = "1";
+            p.style.transform = "none";
+          });
+          const sign = wrap.querySelector(".letter-sign");
+          sign.style.transitionDelay = 0.85 + paras.length * 0.1 + 0.15 + "s";
+          sign.style.opacity = "1";
+          sign.style.transform = "none";
+        }, 720);
+      }
+
+      function closeLetter() {
+        const wrap = document.getElementById("letterWrap");
+        wrap.querySelectorAll(".letter p, .letter-sign").forEach((el) => {
+          el.style.transitionDelay = "0s";
+          el.style.opacity = "0";
+          el.style.transform = "translateY(8px)";
+        });
+        wrap.classList.remove("visible");
+        setTimeout(() => {
+          document.getElementById("envelope").classList.remove("opening");
+          document.getElementById("hint").classList.remove("hidden");
+        }, 600);
+      }
+    </script>
+  </body>
+</html>
